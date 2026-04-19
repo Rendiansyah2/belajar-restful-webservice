@@ -7,11 +7,23 @@ use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    // GET /api/comments
-    public function index()
+    // GET /api/posts/{id}/comments
+    public function index($id)
     {
-        $comments = Comment::all();
+        $comments = Comment::where('post_id', $id)->get();
         return response()->json($comments);
+    }
+
+    // POST /api/posts/{id}/comments
+    public function store(Request $request, $id)
+    {
+        $comment = Comment::create([
+            'comment' => $request->comment,
+            'post_id' => $id,      // diambil dari URL, bukan dari body
+            'user_id' => $request->user_id,
+        ]);
+
+        return response()->json($comment, 201);
     }
 
     // GET /api/comments/{id}
@@ -19,17 +31,6 @@ class CommentController extends Controller
     {
         $comment = Comment::find($id);
         return response()->json($comment);
-    }
-
-    // POST /api/comments
-    public function store(Request $request)
-    {
-        $allowedFields = ['comment', 'post_id', 'user_id'];
-        $input = $request->only($allowedFields);
-
-        $comment = Comment::create($input);
-
-        return response()->json($comment, 201);
     }
 
     // PUT /api/comments/{id}
