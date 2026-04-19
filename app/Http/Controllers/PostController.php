@@ -4,60 +4,85 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    // GET /api/posts → getAllPosts()
+    // GET /api/posts - dengan pagination
     public function index()
     {
-        $posts = Post::all();
-        return response()->json($posts);
+        $posts = Post::paginate(20);
+        $data = $posts->items();
+
+        return response()->json([
+            'data' => $data,
+            'total_count' => $posts->total(),
+            'limit' => $posts->perPage(),
+            'pagination' => [
+                'next_page' => $posts->nextPageUrl(),
+                'current_page' => $posts->currentPage()
+            ]
+        ]);
     }
 
-    // GET /api/posts/{id} → getPost()
+    // GET /api/posts/{id}
     public function show($id)
     {
         $post = Post::find($id);
         if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
+            abort(404);
         }
         return response()->json($post);
     }
 
-    // POST /api/posts → addPost()
+    // POST /api/posts - dengan validation
     public function store(Request $request)
     {
-        $post = Post::create([
-            'title'   => $request->title,
-            'status'  => $request->status ?? 'draft',
-            'content' => $request->content,
-            'user_id' => $request->user_id,
-        ]);
+        $input = $request->all();
 
-        return response()->json($post, 201);
+        $validationRules = [
+            'content' => 'required|min:1',
+            'title'   => 'required|min:1',
+            'status'  => 'required|in:draft,published',
+            'user_id' => 'required|exists:users,id'
+        ];
+
+        $validator = Validator::make($input, $validationRules);
+        if ($validator->fails()) {
+            return new JsonResponse(
+                ['errors' => $validator->errors()],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $post = Post::create($input);
+        return response()->json(['data' => $post], 201);
     }
 
-    // PUT /api/posts/{id} → updatePost()
+    // PUT /api/posts/{id}
     public function update(Request $request, $id)
     {
         $post = Post::find($id);
         if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
+            abort(404);
         }
 
-        $post->update($request->only(['title', 'status', 'content', 'user_id']));
+        $post->fill($request->all());
+        $post->save();
         return response()->json($post);
     }
 
-    // DELETE /api/posts/{id} → deletePost()
+    // DELETE /api/posts/{id}
     public function destroy($id)
     {
         $post = Post::find($id);
         if (!$post) {
-            return response()->json(['message' => 'Post not found'], 404);
+            abort(404);
         }
 
         $post->delete();
-        return response()->json(['id' => $id, 'deleted' => true]);
+        return response()->json(['message' => 'deleted successfully', 'post_id' => $id]);
     }
 }
