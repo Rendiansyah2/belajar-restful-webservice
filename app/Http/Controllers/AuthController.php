@@ -97,4 +97,35 @@ class AuthController extends Controller
             'message' => 'User berhasil dihapus'
         ]);
     }
+
+    // PUT /api/change-password
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required',
+            'new_password'     => 'required|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return new JsonResponse(
+                ['errors' => $validator->errors()],
+                400
+            );
+        }
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Password lama salah'
+            ], 401);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password berhasil diubah'
+        ]);
+    }
 }
