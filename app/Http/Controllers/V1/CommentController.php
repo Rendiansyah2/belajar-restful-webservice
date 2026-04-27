@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\V1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    // GET /api/posts/{id}/comments - dengan pagination
+    // GET /api/v1/posts/{id}/comments - dengan pagination
     public function index($id)
     {
         $comments = Comment::where('post_id', $id)->paginate(20);
@@ -27,7 +28,7 @@ class CommentController extends Controller
         ]);
     }
 
-    // POST /api/posts/{id}/comments - dengan validation
+    // POST /api/v1/posts/{id}/comments - dengan validation
     public function store(Request $request, $id)
     {
         $input = $request->all();
@@ -54,7 +55,7 @@ class CommentController extends Controller
         return response()->json(['data' => $comment], 201);
     }
 
-    // GET /api/comments/{id}
+    // GET /api/v1/comments/{id}
     public function show($id)
     {
         $comment = Comment::find($id);
@@ -64,7 +65,7 @@ class CommentController extends Controller
         return response()->json($comment);
     }
 
-    // PUT /api/comments/{id}
+    // PUT /api/v1/comments/{id}
     public function update(Request $request, $id)
     {
         $comment = Comment::find($id);
@@ -77,7 +78,7 @@ class CommentController extends Controller
         return response()->json($comment);
     }
 
-    // DELETE /api/comments/{id}
+    // DELETE /api/v1/comments/{id}
     public function destroy($id)
     {
         $comment = Comment::find($id);

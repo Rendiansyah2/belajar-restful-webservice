@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\V1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    // GET /api/posts - dengan pagination
+    // GET /api/v1/posts - dengan pagination
     public function index()
     {
         $posts = Post::paginate(20);
@@ -27,7 +28,7 @@ class PostController extends Controller
         ]);
     }
 
-    // GET /api/posts/{id}
+    // GET /api/v1/posts/{id}
     public function show($id)
     {
         $post = Post::find($id);
@@ -37,7 +38,7 @@ class PostController extends Controller
         return response()->json($post);
     }
 
-    // POST /api/posts - dengan validation
+    // POST /api/v1/posts - dengan validation
     public function store(Request $request)
     {
         $input = $request->all();
@@ -61,7 +62,7 @@ class PostController extends Controller
         return response()->json(['data' => $post], 201);
     }
 
-    // PUT /api/posts/{id}
+    // PUT /api/v1/posts/{id}
     public function update(Request $request, $id)
     {
         $post = Post::find($id);
@@ -74,7 +75,7 @@ class PostController extends Controller
         return response()->json($post);
     }
 
-    // DELETE /api/posts/{id}
+    // DELETE /api/v1/posts/{id}
     public function destroy($id)
     {
         $post = Post::find($id);
