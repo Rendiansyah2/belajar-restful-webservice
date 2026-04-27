@@ -4,10 +4,14 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Transformers\PostTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Resource\Collection;
 
 class PostController extends Controller
 {
@@ -15,17 +19,19 @@ class PostController extends Controller
     public function index()
     {
         $posts = Post::paginate(20);
-        $data = $posts->items();
+        $fractal = new Manager();
 
-        return response()->json([
-            'data' => $data,
+        $resource = new Collection($posts->items(), new PostTransformer());
+        $resource->setMeta([
             'total_count' => $posts->total(),
             'limit' => $posts->perPage(),
             'pagination' => [
                 'next_page' => $posts->nextPageUrl(),
-                'current_page' => $posts->currentPage()
-            ]
+                'current_page' => $posts->currentPage(),
+            ],
         ]);
+
+        return response()->json($fractal->createData($resource)->toArray());
     }
 
     // GET /api/v1/posts/{id}
@@ -35,7 +41,11 @@ class PostController extends Controller
         if (!$post) {
             abort(404);
         }
-        return response()->json($post);
+
+        $fractal = new Manager();
+        $resource = new Item($post, new PostTransformer());
+
+        return response()->json($fractal->createData($resource)->toArray());
     }
 
     // POST /api/v1/posts - dengan validation
@@ -59,7 +69,11 @@ class PostController extends Controller
         }
 
         $post = Post::create($input);
-        return response()->json(['data' => $post], 201);
+
+        $fractal = new Manager();
+        $resource = new Item($post, new PostTransformer());
+
+        return response()->json($fractal->createData($resource)->toArray(), 201);
     }
 
     // PUT /api/v1/posts/{id}
@@ -72,7 +86,11 @@ class PostController extends Controller
 
         $post->fill($request->all());
         $post->save();
-        return response()->json($post);
+
+        $fractal = new Manager();
+        $resource = new Item($post, new PostTransformer());
+
+        return response()->json($fractal->createData($resource)->toArray());
     }
 
     // DELETE /api/v1/posts/{id}

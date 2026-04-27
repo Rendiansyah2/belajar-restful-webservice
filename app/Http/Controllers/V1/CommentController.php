@@ -4,10 +4,14 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
+use App\Transformers\CommentTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Resource\Collection;
 
 class CommentController extends Controller
 {
@@ -15,17 +19,19 @@ class CommentController extends Controller
     public function index($id)
     {
         $comments = Comment::where('post_id', $id)->paginate(20);
-        $data = $comments->items();
+        $fractal = new Manager();
 
-        return response()->json([
-            'data' => $data,
+        $resource = new Collection($comments->items(), new CommentTransformer());
+        $resource->setMeta([
             'total_count' => $comments->total(),
             'limit' => $comments->perPage(),
             'pagination' => [
                 'next_page' => $comments->nextPageUrl(),
-                'current_page' => $comments->currentPage()
-            ]
+                'current_page' => $comments->currentPage(),
+            ],
         ]);
+
+        return response()->json($fractal->createData($resource)->toArray());
     }
 
     // POST /api/v1/posts/{id}/comments - dengan validation
@@ -52,7 +58,10 @@ class CommentController extends Controller
             'user_id' => $request->user_id,
         ]);
 
-        return response()->json(['data' => $comment], 201);
+        $fractal = new Manager();
+        $resource = new Item($comment, new CommentTransformer());
+
+        return response()->json($fractal->createData($resource)->toArray(), 201);
     }
 
     // GET /api/v1/comments/{id}
@@ -62,7 +71,11 @@ class CommentController extends Controller
         if (!$comment) {
             abort(404);
         }
-        return response()->json($comment);
+
+        $fractal = new Manager();
+        $resource = new Item($comment, new CommentTransformer());
+
+        return response()->json($fractal->createData($resource)->toArray());
     }
 
     // PUT /api/v1/comments/{id}
@@ -75,7 +88,11 @@ class CommentController extends Controller
 
         $comment->fill($request->only(['comment']));
         $comment->save();
-        return response()->json($comment);
+
+        $fractal = new Manager();
+        $resource = new Item($comment, new CommentTransformer());
+
+        return response()->json($fractal->createData($resource)->toArray());
     }
 
     // DELETE /api/v1/comments/{id}
