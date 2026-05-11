@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, string $role)
+    public function handle(Request $request, Closure $next, string ...$roles)
     {
         // Cek apakah user sudah login
         if (!$request->user()) {
@@ -15,7 +15,8 @@ class RoleMiddleware
         }
 
         // Cek apakah role user sesuai
-        if ($request->user()->role !== $role) {
+        $allowedRoles = array_map('trim', $roles);
+        if (!in_array($request->user()->role, $allowedRoles, true)) {
             return response()->json(['message' => 'Forbidden, role tidak sesuai'], 403);
         }
 

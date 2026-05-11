@@ -88,6 +88,22 @@ class AuthController extends Controller
         ]);
     }
 
+    // GET /api/users (admin only)
+    public function index(Request $request)
+    {
+        $users = User::paginate(20);
+
+        return response()->json([
+            'data' => $users->items(),
+            'total_count' => $users->total(),
+            'limit' => $users->perPage(),
+            'pagination' => [
+                'next_page' => $users->nextPageUrl(),
+                'current_page' => $users->currentPage(),
+            ],
+        ]);
+    }
+
     // DELETE /api/user
     public function destroy(Request $request)
     {
