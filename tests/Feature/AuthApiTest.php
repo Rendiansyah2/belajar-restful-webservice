@@ -158,4 +158,23 @@ class AuthApiTest extends TestCase
         $response->assertStatus(200)
                  ->assertJson(['message' => 'Logout berhasil']);
     }
+
+    public function test_rate_limiting_throttling()
+    {
+        // Hit endpoint sebanyak batas limit (5 kali)
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/v1/login', [
+                'email' => 'randomuser@example.com',
+                'password' => 'wrongpassword',
+            ]);
+        }
+
+        // Hit ke-6 harusnya ditolak karena melebihi batas (limit: 5 request/menit)
+        $response = $this->postJson('/api/v1/login', [
+            'email' => 'randomuser@example.com',
+            'password' => 'wrongpassword',
+        ]);
+
+        $response->assertStatus(429); // 429 Too Many Requests
+    }
 }
